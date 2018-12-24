@@ -1,13 +1,8 @@
 'use strict';
 
 const functions = require('firebase-functions');
-const {
-  WebhookClient
-} = require('dialogflow-fulfillment');
-const {
-  Card,
-  Suggestion
-} = require('dialogflow-fulfillment');
+const {  WebhookClient} = require('dialogflow-fulfillment');
+const {  Card,  Suggestion} = require('dialogflow-fulfillment');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
@@ -131,39 +126,39 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     try {
       shiftDirection = parseInt(agent.parameters.shiftDirection);
       shiftValue = parseInt(agent.parameters.shiftValue);
-    } catch (e) {}
+    } catch (e) { }
 
-      for (var i = 0; i < arBarrageStrength.length - 1; i++) {
-        if (ValueInRange(strength, arBarrageStrength[i]))
-          iCol = i;
-      }
+    for (var i = 0; i < arBarrageStrength.length - 1; i++) {
+      if (ValueInRange(strength, arBarrageStrength[i]))
+        iCol = i;
+    }
 
-      if (sTerrain === 'close' || sTerrain === 'very close')
-        iCol -= 1;
-      else if (sTerrain === 'extra close')
-        iCol -= 2;
+    if (sTerrain === 'close' || sTerrain === 'very close')
+      iCol -= 1;
+    else if (sTerrain === 'extra close')
+      iCol -= 2;
 
-      if (shiftValue != 0 && shiftDirection != ''){
-        if (shiftDirection === 'left')
-          iCol -= shiftValue;
-        else if (shiftDirection === 'right')
-          iCol += shiftValue;
-      }
+    if (shiftValue != 0 && shiftDirection != '') {
+      if (shiftDirection === 'left')
+        iCol -= shiftValue;
+      else if (shiftDirection === 'right')
+        iCol += shiftValue;
+    }
 
-      if (iCol > arBarrageStrength.length)
-          iCol = arBarrageStrength.length;
-      if (iCol < 1)
-          iCol = 1;
+    if (iCol > arBarrageStrength.length)
+      iCol = arBarrageStrength.length;
+    if (iCol < 1)
+      iCol = 1;
 
-      var sResultSpeech = "Your supply cost is " + arBarrageCost[iCol];
-      const sResults = arBarrageResult[iRow][iCol];
-      if (sResults === '-')
-        sResultSpeech += ". Result is no damage";
-      else
-        sResultSpeech += ". Result is " + arBarrageResult[iRow][iCol];
+    var sResultSpeech = "Your supply cost is " + arBarrageCost[iCol];
+    const sResults = arBarrageResult[iRow][iCol];
+    if (sResults === '-')
+      sResultSpeech += ". Result is no damage";
+    else
+      sResultSpeech += ". Result is " + arBarrageResult[iRow][iCol];
 
-      sResultSpeech += ". In " + sTerrain + " terrain."
-      agent.add(sResultSpeech);
+    sResultSpeech += ". In " + sTerrain + " terrain."
+    agent.add(sResultSpeech);
   }
 
   function Attacking(sAttackType) {
@@ -259,7 +254,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         }
         sResultSpeech += " <break time=\"400ms\"/> . in " + sTerrain + " terrain. ";
       }
-    } catch (Exception) {}
+    } catch (Exception) { }
 
     const sFinalSpeech = "<speak>" + sResultSpeech + "</speak>";
 
@@ -336,8 +331,8 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     const conv = agent.conv();
     if (conv) {
       var x = admin.database().ref('/data/' + conv.user.id);
-      x.on('value', function(snapshot) {
-        snapshot.forEach(function(childSnapshot) {
+      x.on('value', function (snapshot) {
+        snapshot.forEach(function (childSnapshot) {
           const d = childSnapshot.val();
           console.log('terrain = ' + d.terrain);
           agent.setContext({
@@ -365,6 +360,19 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     }
   }
 
+  function flackHandler(agent) {
+    agent.add('You rolled a ' + RollResult(2, 6) + '. Add modifiers as necessary.');
+  }
+
+  function diceHandler(agent) {
+    try {
+      var iDice = parseInt(agent.parameters.dice);
+      agent.add('You rolled ' + iDice + ' dice, and got a ' + RollResult(iDice, 6));
+    } catch (Exception) {
+      agent.add('Issue while rolling dice');
+    }
+  }
+
   let intentMap = new Map();
   intentMap.set('Default Welcome Intent', welcome);
   intentMap.set('Default Fallback Intent', fallback);
@@ -373,5 +381,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   intentMap.set('Terrain', terrainHandler);
   intentMap.set('Repeat', repeatHandler);
   intentMap.set('Barrage', barrageHandler);
+  intentMap.set('Flack', flackHandler);
+  intentMap.set('RollDice', diceHandler);
   agent.handleRequest(intentMap);
 });
